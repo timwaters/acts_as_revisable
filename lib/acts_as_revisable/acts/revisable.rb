@@ -14,6 +14,9 @@ module WithoutScope
     # * +after_branch_created+ is called on the new revisable instance
     #   created by branching after it's been created.
     module Revisable
+      CALLBACK_METHODS = ["before_revise", "after_revise", "before_revert",
+        "after_revert", "before_changeset", "after_changeset", "after_branch_created"]
+      
       def self.included(base) #:nodoc:
         base.send(:extend, ClassMethods)
                 
@@ -23,21 +26,47 @@ module WithoutScope
         
         base.class_inheritable_hash :revisable_shared_objects
         base.revisable_shared_objects = {}
+
+        # yanked from Authlogic::ActsAsAuthentic::Session::Callbacks
+        base.define_callbacks *CALLBACK_METHODS
+        
+        if base.send(base.respond_to?(:singleton_class) ? :singleton_class : :metaclass).method_defined?(:set_callback)
+          CALLBACK_METHODS.each do |method|
+            base.class_eval <<-"end_eval", __FILE__, __LINE__
+              def self.#{method}(*methods, &block)
+                set_callback :#{method}, *methods, &block
+              end
+            end_eval
+          end
+        end
+        
+        private
+          CALLBACK_METHODS.each do |method|
+            class_eval <<-"end_eval", __FILE__, __LINE__
+              def #{method}
+                run_callbacks(:#{method}) { |result, object| result == false }
+              end
+            end_eval
+          end
         
         base.instance_eval do
           attr_accessor :revisable_new_params, :revisable_revision
-          
-          define_callbacks :before_revise, :after_revise, :before_revert, :after_revert, :before_changeset, :after_changeset, :after_branch_created
-                    
+
           before_create :before_revisable_create
           before_update :before_revisable_update
           after_update :after_revisable_update
           after_save :clear_revisable_shared_objects!, :unless => :is_reverting?
           
-          default_scope :conditions => {:revisable_is_current => true}
+          # default_scope :conditions => {:revisable_is_current => true}
+          default_scope where({:revisable_is_current => true})
           
           [:revisions, revisions_association_name.to_sym].each do |assoc|
-            has_many assoc, (revisable_options.revision_association_options || {}).merge({:class_name => revision_class_name, :foreign_key => :revisable_original_id, :order => "#{quoted_table_name}.#{connection.quote_column_name(:revisable_number)} DESC", :dependent => :destroy})
+            has_many assoc, (revisable_options.revision_association_options || {}).merge({
+              :class_name => revision_class_name,
+              :foreign_key => :revisable_original_id,
+              :order => "#{quoted_table_name}.#{connection.quote_column_name(:revisable_number)} DESC",
+              :dependent => :destroy
+            })
           end
         end
 
@@ -107,7 +136,9 @@ module WithoutScope
       def revert_to(what, *args, &block) #:yields:
         is_reverting!
         
-        unless run_callbacks(:before_revert) { |r, o| r == false}
+        # todo run_callbacks breaks in ActiveRecord 3
+        # wip
+        unless run_callbacks(:before_revert) # { |r, o| r == false}
           raise ActiveRecord::RecordNotSaved
         end
       
@@ -116,7 +147,9 @@ module WithoutScope
         rev = find_revision(what)
         self.reverting_to, self.reverting_from = rev, self
         
-        unless rev.run_callbacks(:before_restore) { |r, o| r == false}
+        # todo run_callbacks breaks in ActiveRecord 3
+        # wip
+        unless rev.run_callbacks(:before_restore) # { |r, o| r == false}
           raise ActiveRecord::RecordNotSaved
         end
     
@@ -129,6 +162,9 @@ module WithoutScope
         self.revisable_new_params = options
         
         yield(self) if block_given?
+        
+        # todo run_callbacks breaks in ActiveRecord 3
+        # wip
         rev.run_callbacks(:after_restore)
         run_callbacks(:after_revert)
         self
@@ -240,7 +276,9 @@ module WithoutScope
         
         return yield(self) if in_revision?
         
-        unless run_callbacks(:before_changeset) { |r, o| r == false}
+        # todo run_callbacks breaks in ActiveRecord 3
+        # wip
+        unless run_callbacks(:before_changeset) # { |r, o| r == false}
           raise ActiveRecord::RecordNotSaved
         end
         
@@ -248,7 +286,7 @@ module WithoutScope
           force_revision!
           in_revision!
         
-          returning(yield(self)) do
+          yield(self).tap do
             run_callbacks(:after_changeset)
           end
         ensure
@@ -281,15 +319,19 @@ module WithoutScope
       # acts_as_revisable's override for ActiveRecord::Base's #save!
       def save!(*args) #:nodoc:
         self.revisable_new_params ||= args.extract_options!
+        self.revisable_new_params.delete :validate # AR 3 ?
         self.no_revision! if self.revisable_new_params.delete :without_revision
-        super
+        validate = args.delete_at(0)
+        super({:validate => validate})
       end
       
       # acts_as_revisable's override for ActiveRecord::Base's #save  
       def save(*args) #:nodoc:
         self.revisable_new_params ||= args.extract_options!
+        self.revisable_new_params.delete :validate # AR 3 ?
         self.no_revision! if self.revisable_new_params.delete :without_revision
-        super(args)
+        validate = args.delete_at(0)
+        super({:validate => validate})
       end
       
       # Set some defaults for a newly created +Revisable+ instance.
@@ -314,7 +356,7 @@ module WithoutScope
         return unless should_revise?
         in_revision!
         
-        unless run_callbacks(:before_revise) { |r, o| r == false}
+        unless run_callbacks(:before_revise) # { |r, o| r == false }
           in_revision!(false)
           return false
         end
@@ -333,6 +375,7 @@ module WithoutScope
           revisions.reload
           run_callbacks(:after_revise)
         end
+        
         in_revision!(false)
         force_revision!(false)
         true

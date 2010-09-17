@@ -23,8 +23,14 @@ module WithoutScope
         
         self.revisable_revised_at = self.revisable_deleted_at
         
-        return false unless run_callbacks(:before_revise_on_destroy) { |r, o| r == false}
-        returning(self.save(:without_revision => true)) do
+        # extracted from below
+        self.save(:without_revision => true)
+        
+        # todo run_callbacks breaks in ActiveRecord 3
+        # wip
+        return false unless run_callbacks(:before_revise_on_destroy) # { |r, o| r == false}
+        
+        self.save(:without_revision => true).tap do
           run_callbacks(:after_revise_on_destroy)
         end
       end

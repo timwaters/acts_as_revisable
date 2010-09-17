@@ -9,6 +9,8 @@ module WithoutScope
     # * +after_restore+ is called on the revision class after it is 
     #   restored as the current record.
     module Revision
+      CALLBACK_METHODS = ["before_restore", "after_restore"]
+      
       def self.included(base) #:nodoc:
         base.send(:extend, ClassMethods)
         
@@ -16,15 +18,39 @@ module WithoutScope
           attr_accessor :revisable_revisable_class, :revisable_cloned_associations
         end
         
+        # yanked from Authlogic::ActsAsAuthentic::Session::Callbacks
+        base.define_callbacks *CALLBACK_METHODS
+        
+        if base.send(base.respond_to?(:singleton_class) ? :singleton_class : :metaclass).method_defined?(:set_callback)
+          CALLBACK_METHODS.each do |method|
+            base.class_eval <<-"end_eval", __FILE__, __LINE__
+              def self.#{method}(*methods, &block)
+                set_callback :#{method}, *methods, &block
+              end
+            end_eval
+          end
+        end
+        
+        private
+          CALLBACK_METHODS.each do |method|
+            class_eval <<-"end_eval", __FILE__, __LINE__
+              def #{method}
+                run_callbacks(:#{method}) { |result, object| result == false }
+              end
+            end_eval
+          end
+        
+        
         base.instance_eval do
           set_table_name(revisable_class.table_name)
-          default_scope :conditions => {:revisable_is_current => false}
-                  
-          define_callbacks :before_restore, :after_restore
+          # default_scope :conditions => {:revisable_is_current => false}
+          default_scope where(:revisable_is_current => false)
+
           before_create :revision_setup
           after_create :grab_my_branches
           
-          named_scope :deleted, :conditions => ["? is not null", :revisable_deleted_at]
+          # named_scope :deleted, :conditions => ["? is not null", :revisable_deleted_at]
+          scope :deleted, where("? is not null", :revisable_deleted_at)
           
           [:current_revision, revisable_association_name.to_sym].each do |a|
             belongs_to a, :class_name => revisable_class_name, :foreign_key => :revisable_original_id

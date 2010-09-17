@@ -57,7 +57,9 @@ module WithoutScope
       def branch(*args, &block)
         is_branching!
         
-        unless run_callbacks(:before_branch) { |r, o| r == false}
+        # todo run_callbacks breaks in ActiveRecord 3
+        # wip
+        unless run_callbacks(:before_branch) # { |r, o| r == false}
           raise ActiveRecord::RecordNotSaved
         end
 
@@ -73,6 +75,8 @@ module WithoutScope
         
         br.execute_after(:save) do
           begin
+            # todo run_callbacks breaks in ActiveRecord 3
+            # wip
             run_callbacks(:after_branch)
             br.run_callbacks(:after_branch_created)
           ensure
@@ -166,8 +170,8 @@ module WithoutScope
       
       def diffs(what)
         what = current_revision.find_revision(what)
-        returning({}) do |changes|
-          self.class.revisable_class.revisable_watch_columns.each do |c|
+        {}.tap do |changes|
+          self.class.revisable_class.revisable_watch_columns.map do |c|
             changes[c] = [self[c], what[c]] unless self[c] == what[c]
           end
         end

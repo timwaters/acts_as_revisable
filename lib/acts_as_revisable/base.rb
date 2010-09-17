@@ -47,7 +47,8 @@ module WithoutScope
           
           self.send(:include, Common)
           self.send(:extend, Validations) unless self.revisable_options.no_validation_scoping?
-          self.send(:include, WithoutScope::QuotedColumnConditions)
+          # todo breaks in ActiveRecord 3 - component not necessary
+          # self.send(:include, WithoutScope::QuotedColumnConditions)
         end
     end
   end
