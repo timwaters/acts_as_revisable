@@ -43,14 +43,14 @@ module WithoutScope
         
         base.instance_eval do
           set_table_name(revisable_class.table_name)
-          # default_scope :conditions => {:revisable_is_current => false}
-          default_scope where(:revisable_is_current => false)
+          default_scope :conditions => {:revisable_is_current => false} unless ActiveRecord::Base.respond_to?(:arel_table)
+          default_scope where(:revisable_is_current => false) if ActiveRecord::Base.respond_to?(:arel_table)
 
           before_create :revision_setup
           after_create :grab_my_branches
           
-          # named_scope :deleted, :conditions => ["? is not null", :revisable_deleted_at]
-          scope :deleted, where("? is not null", :revisable_deleted_at)
+          named_scope :deleted, :conditions => ["? is not null", :revisable_deleted_at] unless ActiveRecord::Base.respond_to?(:arel_table)
+          scope :deleted, where("? is not null", :revisable_deleted_at) if ActiveRecord::Base.respond_to?(:arel_table)
           
           [:current_revision, revisable_association_name.to_sym].each do |a|
             belongs_to a, :class_name => revisable_class_name, :foreign_key => :revisable_original_id

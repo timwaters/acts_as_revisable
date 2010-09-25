@@ -57,8 +57,8 @@ module WithoutScope
           after_update :after_revisable_update
           after_save :clear_revisable_shared_objects!, :unless => :is_reverting?
           
-          # default_scope :conditions => {:revisable_is_current => true}
-          default_scope where({:revisable_is_current => true})
+          default_scope :conditions => {:revisable_is_current => true} unless ActiveRecord::Base.respond_to?(:arel_table)
+          default_scope where({:revisable_is_current => true}) if ActiveRecord::Base.respond_to?(:arel_table)
           
           [:revisions, revisions_association_name.to_sym].each do |assoc|
             has_many assoc, (revisable_options.revision_association_options || {}).merge({
@@ -319,19 +319,23 @@ module WithoutScope
       # acts_as_revisable's override for ActiveRecord::Base's #save!
       def save!(*args) #:nodoc:
         self.revisable_new_params ||= args.extract_options!
-        self.revisable_new_params.delete :validate # AR 3 ?
+        if self.revisable_new_params.has_key?(:validate)
+          validate = self.revisable_new_params.delete :validate
+        end
         self.no_revision! if self.revisable_new_params.delete :without_revision
-        validate = args.delete_at(0)
-        super({:validate => validate})
+        super({:validate => validate}) if ActiveRecord::Base.respond_to?(:arel_table)
+        super unless ActiveRecord::Base.respond_to?(:arel_table)
       end
       
       # acts_as_revisable's override for ActiveRecord::Base's #save  
       def save(*args) #:nodoc:
         self.revisable_new_params ||= args.extract_options!
-        self.revisable_new_params.delete :validate # AR 3 ?
+        if self.revisable_new_params.has_key?(:validate)
+          validate = self.revisable_new_params.delete :validate
+        end
         self.no_revision! if self.revisable_new_params.delete :without_revision
-        validate = args.delete_at(0)
-        super({:validate => validate})
+        super({:validate => validate}) if ActiveRecord::Base.respond_to?(:arel_table)
+        super(args) unless ActiveRecord::Base.respond_to?(:arel_table)
       end
       
       # Set some defaults for a newly created +Revisable+ instance.
