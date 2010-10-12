@@ -323,8 +323,8 @@ module WithoutScope
           validate = self.revisable_new_params.delete :validate
         end
         self.no_revision! if self.revisable_new_params.delete :without_revision
-        super({:validate => validate}) if ActiveRecord::Base.respond_to?(:arel_table)
-        super unless ActiveRecord::Base.respond_to?(:arel_table)
+        return super({:validate => validate}) if ActiveRecord::Base.respond_to?(:arel_table)
+        return super unless ActiveRecord::Base.respond_to?(:arel_table)
       end
       
       # acts_as_revisable's override for ActiveRecord::Base's #save  
@@ -334,8 +334,8 @@ module WithoutScope
           validate = self.revisable_new_params.delete :validate
         end
         self.no_revision! if self.revisable_new_params.delete :without_revision
-        super({:validate => validate}) if ActiveRecord::Base.respond_to?(:arel_table)
-        super(args) unless ActiveRecord::Base.respond_to?(:arel_table)
+        return super({:validate => validate}) if ActiveRecord::Base.respond_to?(:arel_table)
+        return super(args) unless ActiveRecord::Base.respond_to?(:arel_table)
       end
       
       # Set some defaults for a newly created +Revisable+ instance.
