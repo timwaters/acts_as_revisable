@@ -25,7 +25,7 @@ module WithoutScope
         
         return false unless run_callbacks(:before_revise_on_destroy) # { |r, o| r == false}
         
-        self.save(:without_revision => true).tap do
+        self.save(:validate => false, :without_revision => true).tap do
           run_callbacks(:after_revise_on_destroy)
         end
       end
