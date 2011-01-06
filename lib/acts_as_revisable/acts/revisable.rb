@@ -15,7 +15,8 @@ module WithoutScope
     #   created by branching after it's been created.
     module Revisable
       CALLBACK_METHODS = ["before_revise", "after_revise", "before_revert",
-        "after_revert", "before_changeset", "after_changeset", "after_branch_created"]
+                          "after_revert", "before_changeset", "after_changeset", "after_branch_created",
+                          "before_revise_on_destroy", "after_revise_on_destroy"]
       
       def self.included(base) #:nodoc:
         base.send(:extend, ClassMethods)
