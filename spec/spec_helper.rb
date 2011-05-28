@@ -1,9 +1,9 @@
 begin
-  require 'spec'
+  require 'rspec'
 rescue LoadError
   require 'rubygems'
   gem 'rspec'
-  require 'spec'
+  require 'rspec'
 end
 
 if ENV['EDGE_RAILS_PATH']
