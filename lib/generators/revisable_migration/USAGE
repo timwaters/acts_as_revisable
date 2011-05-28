@@ -6,7 +6,7 @@ Example:
     rails generate revisable_migration Thing
 
     This will create:
-        db/migrate/make_things_revisable_{version}
+        db/migrate/{version}_make_things_revisable
         
         And add the following columns to the 'things' table
           revisable_original_id
