@@ -149,7 +149,7 @@ module WithoutScope
         # Returns the name of the association acts_as_revision
         # creates.
         def revisable_association_name #:nodoc:
-          revisable_class_name.underscore
+          revisable_class_name.demodulize.underscore
         end
         
         # Returns an array of the associations that should be cloned.

@@ -70,8 +70,18 @@ module WithoutScope
             })
           end
         end
-
-        if !Object.const_defined?(base.revision_class_name) && base.revisable_options.generate_revision_class?
+        
+        parts = base.revision_class_name.split('::')
+        result = false
+        result = Object.const_defined?(parts[0]) if parts.size == 1
+        result = false unless Object.const_defined?(parts[0])
+        while parts.size >= 2 do
+          current_parent = parts.shift
+          current_child = parts.shift
+          result = current_parent.constantize.const_defined?(current_child)
+        end
+        
+        if !result and base.revisable_options.generate_revision_class?
           Object.const_set(base.revision_class_name, Class.new(ActiveRecord::Base)).instance_eval do
             acts_as_revision
           end
@@ -511,7 +521,7 @@ module WithoutScope
         # Returns the name of the association acts_as_revisable
         # creates.
         def revisions_association_name #:nodoc:
-          revision_class_name.pluralize.underscore
+          revision_class_name.demodulize.pluralize.underscore
         end
         
         # Returns an Array of the columns that are watched for changes.

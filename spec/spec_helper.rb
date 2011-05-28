@@ -53,6 +53,15 @@ def setup_db
       t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
       t.timestamps
     end
+    
+    create_table :domestic_cats do |t|
+      t.string :name, :revisable_name, :revisable_type, :type
+      t.text :description
+      t.boolean :revisable_is_current
+      t.integer :revisable_original_id, :revisable_branched_from_id, :revisable_number
+      t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
+      t.timestamps
+    end
   end
 end
 
@@ -118,4 +127,21 @@ end
 
 class ArticleRevision < PostRevision
   acts_as_revision
+end
+
+module Domestic
+  def self.table_name_prefix
+    "domestic_"
+  end
+  class Cat < ActiveRecord::Base
+    validates_presence_of :name
+    acts_as_revisable do
+      revision_class_name "Domestic::CatRevision"
+    end
+  end
+  class CatRevision < ActiveRecord::Base
+    acts_as_revision do
+      revisable_class_name "Domestic::Cat"
+    end
+  end
 end
