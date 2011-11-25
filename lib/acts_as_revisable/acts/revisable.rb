@@ -25,7 +25,7 @@ module WithoutScope
           attr_accessor :revisable_revision_class, :revisable_columns
         end
         
-        base.class_inheritable_hash :revisable_shared_objects
+        base.class_attribute :revisable_shared_objects
         base.revisable_shared_objects = {}
 
         # yanked from Authlogic::ActsAsAuthentic::Session::Callbacks
