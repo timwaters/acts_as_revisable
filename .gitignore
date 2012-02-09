@@ -3,3 +3,5 @@ doc
 *.gem
 coverage
 .rvmrc
+.bundle
+vendor

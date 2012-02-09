@@ -10,7 +10,7 @@ describe "the quoted_columns extension" do
   end
   
   it "should not quote symbols that don't match column names" do
-    Project.send(:quote_bound_value, :whatever).should == "'#{:whatever.to_yaml}'"
+    Project.send(:quote_bound_value, :whatever).should == "'whatever'"
   end
   
   it "should not quote strings any differently" do

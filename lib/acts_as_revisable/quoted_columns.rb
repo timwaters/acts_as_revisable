@@ -16,16 +16,18 @@ module WithoutScope::QuotedColumnConditions
   end
   
   module ClassMethods
-    def quote_bound_value(value)
+    def quote_bound_value(*args)
+      value = args[0]
       if value.is_a?(Symbol) && column_names.member?(value.to_s)
         # code borrowed from sanitize_sql_hash_for_conditions
         attr = value.to_s
         table_name = quoted_table_name
-        
+      
         return "#{table_name}.#{connection.quote_column_name(attr)}"
       end
       
-      super(value)
-    end
+      return super(value) unless ActiveRecord::Base.respond_to?(:arel_table)
+      return super(*args) if ActiveRecord::Base.respond_to?(:arel_table)
+    end      
   end
 end
