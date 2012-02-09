@@ -42,10 +42,9 @@ module WithoutScope
         
         
         base.instance_eval do
-          set_table_name(revisable_class.table_name)
-          default_scope :conditions => {:revisable_is_current => false} unless ActiveRecord::Base.respond_to?(:arel_table)
-          default_scope where(:revisable_is_current => false) if ActiveRecord::Base.respond_to?(:arel_table)
-
+          self.table_name = revisable_class.table_name
+          default_scope :conditions => {:revisable_is_current => false}
+          define_callbacks :before_restore, :after_restore
           before_create :revision_setup
           after_create :grab_my_branches
           
