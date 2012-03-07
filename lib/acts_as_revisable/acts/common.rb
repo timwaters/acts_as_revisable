@@ -23,6 +23,8 @@ module WithoutScope
           has_many :branches, (revisable_options.revision_association_options || {}).merge({:class_name => base.name, :foreign_key => :revisable_branched_from_id})
 
           after_save :execute_blocks_after_save
+
+          attr_accessor :branch_source
         end
       end
             
@@ -205,15 +207,19 @@ module WithoutScope
             self.revision_class
           end.allocate
 
-          object.instance_variable_set("@attributes", record)
-          object.instance_variable_set("@attributes_cache", Hash.new)
+          if Rails::VERSION::MAJOR >= 3 && Rails::VERSION::MINOR >= 1
+            object.init_with('attributes' => record)
+          else
+            object.instance_variable_set("@attributes", record)
+            object.instance_variable_set("@attributes_cache", Hash.new)
 
-          if object.respond_to_without_attributes?(:after_find)
-            object.send(:callback, :after_find)
-          end
+            if object.respond_to_without_attributes?(:after_find)
+              object.send(:callback, :after_find)
+            end
 
-          if object.respond_to_without_attributes?(:after_initialize)
-            object.send(:callback, :after_initialize)
+            if object.respond_to_without_attributes?(:after_initialize)
+              object.send(:callback, :after_initialize)
+            end
           end
 
           object      

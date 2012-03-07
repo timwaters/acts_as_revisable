@@ -475,7 +475,7 @@ module WithoutScope
           options = (args.grep(Hash).first || {})[:find]
 
           if options && options.delete(:with_revisions)
-            with_exclusive_scope do
+            unscoped do
               super(*args, &block)
             end
           else
@@ -493,7 +493,7 @@ module WithoutScope
           options = args.grep(Hash).first
         
           if options && options.delete(:with_revisions)
-            with_exclusive_scope do
+            unscoped do
               super(*args)
             end
           else
