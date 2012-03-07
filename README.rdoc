@@ -183,7 +183,7 @@ If the owner isn't set let's prevent reverting:
 
 == REQUIREMENTS:
 
-This plugin requires Rails 2.3. Use version 0.9.8 of this plugin for Rails 2.1 and 2.2.
+This plugin requires Rails 3.2
 
 == INSTALL:
 
