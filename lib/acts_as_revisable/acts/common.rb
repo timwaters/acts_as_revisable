@@ -9,6 +9,8 @@ module WithoutScope
     # * +after_branch+ is called on the +Revisable+ or +Revision+ that is 
     #   being branched
     module Common
+      CALLBACK_METHODS = ["before_branch", "after_branch"]
+
       def self.included(base) #:nodoc:
         base.send(:extend, ClassMethods)
         
@@ -17,9 +19,20 @@ module WithoutScope
         
         base.class_attribute :revisable_current_states
         base.revisable_current_states = {}
-        
+
+        base.define_callbacks *CALLBACK_METHODS
+
+        if base.send(base.respond_to?(:singleton_class) ? :singleton_class : :metaclass).method_defined?(:set_callback)
+          CALLBACK_METHODS.each do |method|
+            base.class_eval <<-"end_eval", __FILE__, __LINE__
+              def self.#{method}(*methods, &block)
+                set_callback :#{method}, *methods, &block
+              end
+            end_eval
+          end
+        end
+
         base.instance_eval do
-          define_callbacks :before_branch, :after_branch      
           has_many :branches, (revisable_options.revision_association_options || {}).merge({:class_name => base.name, :foreign_key => :revisable_branched_from_id})
 
           after_save :execute_blocks_after_save
@@ -222,7 +235,7 @@ module WithoutScope
             end
           end
 
-          object      
+          object
         end
       end
     end
