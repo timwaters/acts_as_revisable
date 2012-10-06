@@ -5,3 +5,4 @@ coverage
 .rvmrc
 .bundle
 vendor
+pkg/
