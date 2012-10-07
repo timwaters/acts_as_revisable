@@ -47,7 +47,7 @@ def setup_db
     end
     
     create_table :posts do |t|
-      t.string :name, :revisable_name, :revisable_type, :type
+      t.string :name, :author, :title, :tag, :revisable_name, :revisable_type, :type
       t.boolean :revisable_is_current
       t.integer :revisable_original_id, :revisable_branched_from_id, :revisable_number
       t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
@@ -115,6 +115,8 @@ class Post < ActiveRecord::Base
   acts_as_revisable 
   
   validates_uniqueness_of :name
+  validates :title, :uniqueness => true
+  validates :author, :uniqueness => {:scope => :tag}
 end
 
 class PostRevision < ActiveRecord::Base
