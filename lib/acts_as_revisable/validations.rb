@@ -10,7 +10,7 @@ module WithoutScope
       def validates(*args)
         options = args.extract_options!
 
-        if options.include?(:uniqueness)
+        if options[:uniqueness]
           options[:uniqueness] = {} if options[:uniqueness] == true
           options[:uniqueness][:scope] = options[:uniqueness][:scope].to_a << :revisable_is_current
         end
