@@ -53,7 +53,7 @@ def setup_db
       t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
       t.timestamps
     end
-    
+
     create_table :domestic_cats do |t|
       t.string :name, :revisable_name, :revisable_type, :type
       t.text :description
@@ -62,6 +62,23 @@ def setup_db
       t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
       t.timestamps
     end
+
+    create_table :plans do |t|
+      t.string :name, :revisable_name, :revisable_type, :type
+      t.boolean :revisable_is_current
+      t.integer :revisable_original_id, :revisable_branched_from_id, :revisable_number, :price
+      t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
+      t.timestamps
+    end
+
+    create_table :subscriptions do |t|
+      t.string :name, :revisable_name, :revisable_type, :type
+      t.boolean :revisable_is_current
+      t.integer :revisable_original_id, :revisable_branched_from_id, :revisable_number, :plan_id, :plan_vid
+      t.datetime :revisable_current_at, :revisable_revised_at, :revisable_deleted_at
+      t.timestamps
+    end
+    
   end
 end
 
@@ -129,6 +146,37 @@ end
 
 class ArticleRevision < PostRevision
   acts_as_revision
+end
+
+class Plan < ActiveRecord::Base
+  has_many :subscriptions
+
+  acts_as_revisable do
+    revision_class_name "PlanRevision"
+    only :price
+    has_many_fixations :subscriptions
+  end
+end
+
+class PlanRevision < ActiveRecord::Base
+  acts_as_revision do
+    revisable_class_name "Plan"
+  end
+end
+
+class Subscription < ActiveRecord::Base
+  belongs_to :plan
+
+  acts_as_revisable do
+    revision_class_name "SubscriptionRevision"
+    belongs_to_fixations :plan => :first
+  end
+end
+
+class SubscriptionRevision < ActiveRecord::Base
+  acts_as_revision do
+    revisable_class_name "Subscription"
+  end
 end
 
 module Domestic
