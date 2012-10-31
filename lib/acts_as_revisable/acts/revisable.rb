@@ -56,6 +56,7 @@ module WithoutScope
           before_create :before_revisable_create
           before_update :before_revisable_update
           after_update :after_revisable_update
+          before_save :sync_associations, :unless => :is_reverting?
           after_save :clear_revisable_shared_objects!, :unless => :is_reverting?
           
           default_scope :conditions => {:revisable_is_current => true} unless ActiveRecord::Base.respond_to?(:arel_table)
