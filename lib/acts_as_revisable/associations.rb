@@ -11,10 +11,9 @@ module WithoutScope
 
         self.class.reflect_on_all_associations(:belongs_to).each do |r|
           if (assoc_sym = belongs_to_fixations[r.name]) && self.respond_to?(:"#{r.name}_vid")
-            assoc   = self.send(r.name)
-            rev_num = assoc.respond_to?(:revision_number) && assoc.revision_number or next 
+            (assoc = self.send r.name) && assoc.respond_to?(:revision_number) or next 
 
-            if new_record? && assoc_sym == :original || assoc_sym == :first
+            if (!assoc.revisable_is_current || self.send(:"#{r.name}_vid").nil?) && (new_record? && assoc_sym == :original || assoc_sym == :first)
               self.send(:"#{r.name}_vid=", assoc.class.find(assoc.id).revision_number)
             end
           end

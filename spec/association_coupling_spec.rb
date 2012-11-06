@@ -14,7 +14,7 @@ describe WithoutScope::ActsAsRevisable do
     it "should map to the correct version of supper class" do
       @subscription.plan_vid.should == @plan.revision_number
       lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @subscription.plan(:reload => true).revision_number.should == @plan.revision_number - 1
+      @subscription.plan(:reload => true).revision_number.should == @plan.find_revision(:previous).revision_number
     end
 
     it "should filter child assocations returned by parent's version" do
