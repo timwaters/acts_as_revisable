@@ -148,13 +148,16 @@ class ArticleRevision < PostRevision
   acts_as_revision
 end
 
+## Association specific specs ##
 class Plan < ActiveRecord::Base
-  has_many :subscriptions
+  has_many :type_one_subscriptions
+  has_many :type_two_subscriptions
+  has_many :default_subscriptions
 
   acts_as_revisable do
     revision_class_name "PlanRevision"
     only :price
-    has_many_fixations :subscriptions
+    has_many_fixations :type_one_subscriptions, :type_two_subscriptions
   end
 end
 
@@ -164,18 +167,50 @@ class PlanRevision < ActiveRecord::Base
   end
 end
 
-class Subscription < ActiveRecord::Base
+class TypeOneSubscription < ActiveRecord::Base
+  self.table_name = :subscriptions
   belongs_to :plan
 
   acts_as_revisable do
-    revision_class_name "SubscriptionRevision"
+    revision_class_name "TypeOneSubscriptionRevision"
+    belongs_to_fixations :plan => :original
+  end
+end
+
+class TypeOneSubscriptionRevision < ActiveRecord::Base
+  acts_as_revision do
+    revisable_class_name "TypeOneSubscription"
+  end
+end
+
+class TypeTwoSubscription < ActiveRecord::Base
+  self.table_name = :subscriptions
+  belongs_to :plan
+
+  acts_as_revisable do
+    revision_class_name "TypeTwoSubscriptionRevision"
     belongs_to_fixations :plan => :first
   end
 end
 
-class SubscriptionRevision < ActiveRecord::Base
+class TypeTwoSubscriptionRevision < ActiveRecord::Base
   acts_as_revision do
-    revisable_class_name "Subscription"
+    revisable_class_name "TypeTwoSubscription"
+  end
+end
+
+class DefaultSubscription < ActiveRecord::Base
+  self.table_name = :subscriptions
+  belongs_to :plan
+
+  acts_as_revisable do
+    revision_class_name "DefaultSubscriptionRevision"
+  end
+end
+
+class DefaultSubscriptionRevision < ActiveRecord::Base
+  acts_as_revision do
+    revisable_class_name "DefaultSubscription"
   end
 end
 

@@ -41,21 +41,6 @@ module WithoutScope
           end
         end
 
-        # Override assocation helpers 
-        unless base.revisable_options.belongs_to_fixations.blank?
-          base.reflect_on_all_associations(:belongs_to).each do |r|
-            class_eval <<-"end_eval", __FILE__, __LINE__
-              def #{r.name}(*args)
-                if #{(base.revisable_options.belongs_to_fixations || {}).include?(r.name)} && self.respond_to?(:#{r.name}_vid) && !self.#{r.name}_vid.nil?
-                  #{r.class_name}.unscoped.where("revisable_number = :rev_num AND (id = :id OR revisable_original_id = :id)", :rev_num => self.#{r.name}_vid, :id => self.#{r.name}_id).first
-                else
-                  super(args)
-                end
-              end
-            end_eval
-          end
-        end
-        
         private
           CALLBACK_METHODS.each do |method|
             class_eval <<-"end_eval", __FILE__, __LINE__

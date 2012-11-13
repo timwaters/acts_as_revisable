@@ -7,40 +7,90 @@ describe WithoutScope::ActsAsRevisable do
   
   describe "with mapped to original" do
     before(:each) do
-      @plan = Plan.create(:name => "Rich", :price => 10)
-      @subscription = @plan.subscriptions.create(:name => "Frodo")
+      @plan = Plan.create(:name => "Yearly", :price => 10)
+      @subscription = @plan.type_one_subscriptions.create(:name => "Frodo")
     end
 
-    it "should map to the correct version of supper class" do
+    it "should map to the original version when updating" do
       @subscription.plan_vid.should == @plan.revision_number
       lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @subscription.plan(:reload => true).revision_number.should == @plan.find_revision(:previous).revision_number
+      lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
+      @subscription.plan.revision_number.should == @plan.revision_number - 1
+      @subscription.find_revision(:previous).plan.revision_number.should == @plan.revision_number - 1
     end
 
-    it "should filter child assocations returned by parent's version" do
-      @plan.subscription_ids.should include @subscription.id
-      lambda { @plan.update_attributes!(:price => 20) }.should_not raise_error
-      @plan.subscriptions.should_not include @subscription.id
-      @plan.find_revision(:previous).subscription_ids.should include @subscription.id
-    end
-  end
-
-  describe "with mapped to current" do
-    it "should map to the current version of supper class" do
+    it "should filter has-many assocations by parent's version for 'collection_ids'" do
+      @plan.type_one_subscription_ids.should include @subscription.id
+      lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
+      @plan.type_one_subscription_ids.should_not include @subscription.id
+      @plan.find_revision(:previous).type_one_subscription_ids.should include @subscription.id
     end
 
-    it "should return all subclasses" do
-    end
+    it "should filter has-many assocations by parent's version for 'collection(force_reload = false)'" do
+      @plan.type_one_subscriptions.map(&:id).should include @subscription.id
+      lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
+      @plan.type_one_subscriptions.map(&:id).should_not include @subscription.id
 
-    it "should be the default option" do
+      lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
+      @plan.type_one_subscriptions.map(&:id).should_not include @subscription.id
+      @plan.find_revision(:previous).type_one_subscriptions.map(&:id).should include @subscription.id
     end
   end
 
   describe "with mapped to first" do
-    it "should map the current version of parent to the subclass when creating a new instance" do
+    before(:each) do
+      @plan = Plan.create(:name => "Yearly", :price => 10)
+      @subscription = @plan.type_two_subscriptions.create(:name => "Sam")
     end
 
-    it "should filter child assocations returned by parent's version" do
+    it "should map to the active association version at the time of instance creation" do
+      @subscription.plan_vid.should == @plan.revision_number
+      lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
+      @subscription.plan.revision_number.should == @plan.revision_number - 1
+
+      lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
+      @subscription.plan.revision_number.should == @plan.revision_number
+      @subscription.find_revision(:previous).plan.revision_number.should == @plan.revision_number - 1
+    end
+
+    it "should filter has-many assocations by parent's version for 'collection_ids'" do
+      @plan.type_two_subscription_ids.should include @subscription.id
+      lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
+      @plan.type_two_subscription_ids.should_not include @subscription.id
+      @plan.find_revision(:previous).type_two_subscription_ids.should include @subscription.id
+    end
+
+    it "should filter has-many assocations by parent's version for 'collection'" do
+      @plan.type_two_subscriptions.map(&:id).should include @subscription.id
+      lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
+      @plan.type_two_subscriptions.map(&:id).should_not include @subscription.id
+
+      lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
+      @plan.type_two_subscriptions.map(&:id).should include @subscription.id
+      @plan.find_revision(:previous).type_two_subscriptions.map(&:id).should_not include @subscription.id
+    end
+  end
+
+  describe "without version mapping enabled (default)" do
+    before(:each) do
+      @plan = Plan.create(:name => "Yearly", :price => 10)
+      @subscription = @plan.default_subscriptions.create(:name => "Pipin")
+    end
+
+    it "should map to current active association version" do
+      @subscription.plan_vid.should == nil
+      lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
+      lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
+
+      @subscription.plan.revision_number.should == @plan.revision_number
+      @subscription.find_revision(:previous).plan.revision_number.should == @plan.revision_number
+    end
+
+    it "should return all has-many associations" do
+      @plan.default_subscription_ids.should include @subscription.id
+      lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
+      @plan.default_subscription_ids.should include @subscription.id
+      @plan.find_revision(:previous).default_subscription_ids.should include @subscription.id
     end
   end
 

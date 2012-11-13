@@ -27,6 +27,7 @@ module WithoutScope
         revisable_shared_setup(args, block)
         self.send(:include, Revisable)
         self.send(:include, Deletable) if self.revisable_options.on_delete == :revise
+        revisable_rear_shared_setup
       end
       
       # This +acts_as+ extension provides for making a model the 
@@ -34,6 +35,7 @@ module WithoutScope
       def acts_as_revision(*args, &block)
         revisable_shared_setup(args, block)
         self.send(:include, Revision)        
+        revisable_rear_shared_setup
       end
       
       private
@@ -49,7 +51,10 @@ module WithoutScope
           self.send(:include, Common)
           self.send(:extend, Validations) unless self.revisable_options.no_validation_scoping?
           self.send(:include, WithoutScope::QuotedColumnConditions)
-          self.send(:include, Associations)
+        end
+
+        def revisable_rear_shared_setup
+          self.send(:include, Associations) unless self.revisable_options.omit_associations
         end
     end
   end
