@@ -29,7 +29,7 @@ module WithoutScope
               base.class_eval <<-"end_eval", __FILE__, __LINE__
                 def #{method_name}(*args)
                   options = args.extract_options!
-                  use_revision = #{(base.revisable_class.revisable_options.has_many_fixations || {}).include?(r.name)}
+                  use_revision = #{Array(base.revisable_class.revisable_options.has_many_fixations).include?(r.name)}
 
                   if current_revision?
                     if use_revision
