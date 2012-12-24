@@ -15,25 +15,25 @@ describe WithoutScope::ActsAsRevisable do
       @subscription.plan_vid.should == @plan.revision_number
       lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
       lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
-      @subscription.plan.revision_number.should == @plan.revision_number - 1
-      @subscription.find_revision(:previous).plan.revision_number.should == @plan.revision_number - 1
+      @subscription.revised_plan.revision_number.should == @plan.revision_number - 1
+      @subscription.find_revision(:previous).revised_plan.revision_number.should == @plan.revision_number - 1
     end
 
     it "should filter has-many assocations by parent's version for 'collection_ids'" do
-      @plan.type_one_subscription_ids.should include @subscription.id
+      @plan.revised_type_one_subscription_ids.should include @subscription.id
       lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @plan.type_one_subscription_ids.should_not include @subscription.id
-      @plan.find_revision(:previous).type_one_subscription_ids.should include @subscription.id
+      @plan.revised_type_one_subscription_ids.should_not include @subscription.id
+      @plan.find_revision(:previous).revised_type_one_subscription_ids.should include @subscription.id
     end
 
-    it "should filter has-many assocations by parent's version for 'collection(force_reload = false)'" do
-      @plan.type_one_subscriptions.map(&:id).should include @subscription.id
+    it "should filter has-many assocations by parent's version for 'collection'" do
+      @plan.revised_type_one_subscriptions.map(&:id).should include @subscription.id
       lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @plan.type_one_subscriptions.map(&:id).should_not include @subscription.id
+      @plan.revised_type_one_subscriptions.map(&:id).should_not include @subscription.id
 
       lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
-      @plan.type_one_subscriptions.map(&:id).should_not include @subscription.id
-      @plan.find_revision(:previous).type_one_subscriptions.map(&:id).should include @subscription.id
+      @plan.revised_type_one_subscriptions.map(&:id).should_not include @subscription.id
+      @plan.find_revision(:previous).revised_type_one_subscriptions.map(&:id).should include @subscription.id
     end
   end
 
@@ -46,28 +46,28 @@ describe WithoutScope::ActsAsRevisable do
     it "should map to the active association version at the time of instance creation" do
       @subscription.plan_vid.should == @plan.revision_number
       lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @subscription.plan.revision_number.should == @plan.revision_number - 1
+      @subscription.revised_plan.revision_number.should == @plan.revision_number - 1
 
       lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
-      @subscription.plan.revision_number.should == @plan.revision_number
-      @subscription.find_revision(:previous).plan.revision_number.should == @plan.revision_number - 1
+      @subscription.revised_plan.revision_number.should == @plan.revision_number
+      @subscription.find_revision(:previous).revised_plan.revision_number.should == @plan.revision_number - 1
     end
 
     it "should filter has-many assocations by parent's version for 'collection_ids'" do
-      @plan.type_two_subscription_ids.should include @subscription.id
+      @plan.revised_type_two_subscription_ids.should include @subscription.id
       lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @plan.type_two_subscription_ids.should_not include @subscription.id
-      @plan.find_revision(:previous).type_two_subscription_ids.should include @subscription.id
+      @plan.revised_type_two_subscription_ids.should_not include @subscription.id
+      @plan.find_revision(:previous).revised_type_two_subscription_ids.should include @subscription.id
     end
 
     it "should filter has-many assocations by parent's version for 'collection'" do
-      @plan.type_two_subscriptions.map(&:id).should include @subscription.id
+      @plan.revised_type_two_subscriptions.map(&:id).should include @subscription.id
       lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @plan.type_two_subscriptions.map(&:id).should_not include @subscription.id
+      @plan.revised_type_two_subscriptions.map(&:id).should_not include @subscription.id
 
       lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
-      @plan.type_two_subscriptions.map(&:id).should include @subscription.id
-      @plan.find_revision(:previous).type_two_subscriptions.map(&:id).should_not include @subscription.id
+      @plan.revised_type_two_subscriptions.map(&:id).should include @subscription.id
+      @plan.find_revision(:previous).revised_type_two_subscriptions.map(&:id).should_not include @subscription.id
     end
   end
 
@@ -82,15 +82,15 @@ describe WithoutScope::ActsAsRevisable do
       lambda { @plan.update_attributes(:price => 20) }.should change(@plan, :revision_number).by(1)
       lambda { @subscription.update_attributes(:name => "Merry") }.should change(@subscription, :revision_number).by(1)
 
-      @subscription.plan.revision_number.should == @plan.revision_number
-      @subscription.find_revision(:previous).plan.revision_number.should == @plan.revision_number
+      @subscription.revised_plan.revision_number.should == @plan.revision_number
+      @subscription.find_revision(:previous).revised_plan.revision_number.should == @plan.revision_number
     end
 
     it "should return all has-many associations" do
-      @plan.default_subscription_ids.should include @subscription.id
+      @plan.revised_default_subscription_ids.should include @subscription.id
       lambda { @plan.update_attributes!(:price => 20) }.should change(@plan, :revision_number).by(1)
-      @plan.default_subscription_ids.should include @subscription.id
-      @plan.find_revision(:previous).default_subscription_ids.should include @subscription.id
+      @plan.revised_default_subscription_ids.should include @subscription.id
+      @plan.find_revision(:previous).revised_default_subscription_ids.should include @subscription.id
     end
   end
 
