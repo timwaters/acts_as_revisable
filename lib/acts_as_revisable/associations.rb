@@ -6,15 +6,22 @@ module WithoutScope
       def self.included(base) #:nodoc:
         # Override assocation helpers 
         base.revisable_class.reflect_on_all_associations(:belongs_to).each do |r|
+          # using an alias so one can alias the +association+ to +revised_association+ if needed
+          unless base.respond_to?(:revisable_class_name)
+            base.class_eval <<-"end_eval", __FILE__, __LINE__
+              alias :original_#{r.name} :#{r.name}
+            end_eval
+          end
+
           base.class_eval <<-"end_eval", __FILE__, __LINE__
             def revised_#{r.name}(*args)
               if #{(base.revisable_class.revisable_options.belongs_to_fixations || {}).include?(r.name)} && self.respond_to?(:#{r.name}_vid) && !self.#{r.name}_vid.nil?
                 #{r.class_name}.unscoped.where("revisable_number = :rev_num AND (id = :id OR revisable_original_id = :id)", :rev_num => self.#{r.name}_vid, :id => self.#{r.options[:foreign_key] || "#{r.name}_id"}).first
               else
                 if current_revision?
-                  #{r.name}(*args) 
+                  original_#{r.name}(*args) 
                 else
-                  current_revision.send(:#{r.name}, *args)
+                  current_revision.send(:original_#{r.name}, *args)
                 end
               end
             end
@@ -26,6 +33,13 @@ module WithoutScope
             [:' ', :_ids].each do |helper|
               method_name = ((helper == :_ids || helper == :_ids=) && r.name.to_s.singularize || r.name.to_s) + helper.to_s
 
+              # using an alias so one can alias the +association+ to +revised_association+ if needed
+              unless base.respond_to?(:revisable_class_name)
+                base.class_eval <<-"end_eval", __FILE__, __LINE__
+                  alias :original_#{method_name} :#{method_name}
+                end_eval
+              end
+
               base.class_eval <<-"end_eval", __FILE__, __LINE__
                 def revised_#{method_name}(*args)
                   options = args.extract_options!
@@ -34,10 +48,10 @@ module WithoutScope
                   if current_revision?
                     if use_revision
                       #{r.class_name}.where("#{base.revisable_class.name.underscore}_vid = ?", options[:revision_number] || self.revision_number).scoping do
-                        #{method_name} *(args << options)
+                        original_#{method_name} *(args << options)
                       end
                     else
-                      #{method_name}(*args)
+                      original_#{method_name}(*args)
                     end
                   else
                     options[:revision_number] = self.revision_number if use_revision
