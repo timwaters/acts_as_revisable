@@ -81,7 +81,7 @@ module WithoutScope
       # so it will be mapped to the original version through out objects life
       def sync_associations
         belongs_to_fixations = self.class.revisable_options.belongs_to_fixations || {}
-        self.clear_association_cache
+        #self.clear_association_cache
 
         self.class.reflect_on_all_associations(:belongs_to).each do |r|
           if (assoc_sym = belongs_to_fixations[r.name]) && self.respond_to?(:"#{r.name}_vid")
