@@ -181,6 +181,37 @@ If the owner isn't set let's prevent reverting:
     end
   end
 
+
+Correct association mapping:
+  
+Makes sure a child maps to the correct parent version and vice-versa in cases where both associations are versioned. Currently only supports has_many and belongs_to associations. Can be mapped in two ways.
+
+Original mapping - When a child is updated it will always be mapped to the original parent version regardless of parent being revised
+First mapping    - When a child is updated it will be mapped to the current version of parent.
+
+In parent association
+
+  class Parent < ActiveRecord::Base
+    has_many :children
+
+    acts_as_revisable do
+      ....
+      has_many_fixations :children
+    end
+  end
+
+in child association give the option how the mapping should happen (:original or :first). if the option is not given, no mapping will take place. further, in the child table, there should be a column named "#{parent_name}_vid" to keep the parent version.
+
+  class Child < ActiveRecord::Base
+    belongs_to :parent
+
+    acts_as_revisable do
+      ....
+      belongs_to_fixations :parent => :original
+    end
+  end
+
+
 == REQUIREMENTS:
 
 This plugin requires Rails 3.2
