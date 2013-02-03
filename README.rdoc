@@ -21,8 +21,8 @@ This plugin wouldn't exist without Rick Olsen's acts_as_versioned. AAV has been 
     * after_revise
     * before_revert
     * after_revert
-    * before_changeset
-    * after_changeset
+    * before_rchangeset
+    * after_rchangeset
     * after_branch_created
     * before_revise_on_destroy (when :on_destroy => :revise is set)
     * after_revise_on_destroy (when :on_destroy => :revise is set)
@@ -35,7 +35,7 @@ This plugin wouldn't exist without Rick Olsen's acts_as_versioned. AAV has been 
   These work like any other ActiveRecord callbacks. The before_* callbacks can stop the the action. This uses the Callbacks module in ActiveSupport.
 * Works with a single table.
   * Provides migration generators to add the revisable columns.
-* Grouping several revisable actions into a single revision (changeset).
+* Grouping several revisable actions into a single revision (rchangeset).
 * Monitor all or just specified columns to trigger a revision.
 * Uses ActiveRecord's dirty attribute tracking.
 * Several ways to find revisions including:
@@ -141,7 +141,7 @@ Changesets:
   
   @project.revision_number        # => 2
   
-  @project.changeset! do 
+  @project.rchangeset! do 
     @project.name = "Josh"
     
     # save would normally trigger a revision

@@ -9,13 +9,13 @@ module WithoutScope
     # * +after_revise+ is called after the record is revised.
     # * +before_revert+ is called before the record is reverted.
     # * +after_revert+ is called after the record is reverted.
-    # * +before_changeset+ is called before a changeset block is called.
-    # * +after_changeset+ is called after a changeset block is called.
+    # * +before_rchangeset+ is called before a changeset block is called.
+    # * +after_rchangeset+ is called after a changeset block is called.
     # * +after_branch_created+ is called on the new revisable instance
     #   created by branching after it's been created.
     module Revisable
       CALLBACK_METHODS = ["before_revise", "after_revise", "before_revert",
-                          "after_revert", "before_changeset", "after_changeset", "after_branch_created",
+                          "after_revert", "before_rchangeset", "after_rchangeset", "after_branch_created",
                           "before_revise_on_destroy", "after_revise_on_destroy"]
       
       def self.included(base) #:nodoc:
@@ -269,7 +269,7 @@ module WithoutScope
       # ==== Example
       # 
       #   @project.revision_number # => 1
-      #   @project.changeset do |project|
+      #   @project.rchangeset do |project|
       #     # each one of the following statements would 
       #     # normally trigger a revision
       #     project.update_attribute(:name, "new name")
@@ -281,16 +281,16 @@ module WithoutScope
       # 
       # ==== Callbacks
       # 
-      # * +before_changeset+ is called before a changeset block is called.
-      # * +after_changeset+ is called after a changeset block is called.      
-      def changeset(&block)
+      # * +before_rchangeset+ is called before a changeset block is called.
+      # * +after_rchangeset+ is called after a changeset block is called.      
+      def rchangeset(&block)
         return unless block_given?
         
         return yield(self) if in_revision?
         
         # todo run_callbacks breaks in ActiveRecord 3
         # wip
-        unless run_callbacks(:before_changeset) # { |r, o| r == false}
+        unless run_callbacks(:before_rchangeset) # { |r, o| r == false}
           raise ActiveRecord::RecordNotSaved
         end
         
@@ -299,7 +299,7 @@ module WithoutScope
           in_revision!
         
           yield(self).tap do
-            run_callbacks(:after_changeset)
+            run_callbacks(:after_rchangeset)
           end
         ensure
           in_revision!(false)       
@@ -307,8 +307,8 @@ module WithoutScope
       end
       
       # Same as +changeset+ except it also saves the record.
-      def changeset!(&block)
-        changeset do
+      def rchangeset!(&block)
+        rchangeset do
           block.call(self)
           save!
         end
